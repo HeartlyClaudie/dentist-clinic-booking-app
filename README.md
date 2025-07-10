@@ -1,6 +1,6 @@
-# Microservices Appointment Scheduling System
+# Dental Clinic Scheduling System
 
-This project implements two microservices using Node.js and Docker:
+This project, as of now, implements two microservices using Node.js and Docker:
 - **User Service** – Handles user registration, login, and lookup
 - **Booking Service** – Handles booking appointments and integrates with user-service
 
@@ -14,11 +14,12 @@ This project implements two microservices using Node.js and Docker:
 ---
 
 ## 📂 Project Structure
+```bash
 clinic_booking_app/
 ├── user-service/
 ├── booking-service/
 └── docker-compose.yml
-
+```
 ---
 
 ## 🚀 How to Run Locally
@@ -28,14 +29,16 @@ clinic_booking_app/
 - Docker Compose (built-in if Docker Desktop is installed)
 
 ### Start the Services
-bash
 docker compose up --build
 
 User Service: http://localhost:3001
 
 Booking Service: http://localhost:3002
 
+---
+
 ## API Endpoints
+
 ### User Service
 
 | Method | Endpoint        | Description         |
@@ -50,6 +53,8 @@ Booking Service: http://localhost:3002
 | POST   | /bookings | Create a booking (validates user-service) |
 | GET    | /bookings | Retrieve all bookings (in-memory)         |
 
+---
+
 ## Example Workflow
 1. Register a user at http://localhost:3001/users/register
 
@@ -57,7 +62,9 @@ Booking Service: http://localhost:3002
 
 3. View bookings at http://localhost:3002/bookings
 
+---
+
 ## Team Members
-Alexa Agabon
-Hannah Joy Julian
-Claude Kaiser Espanillo
+- Alexa Agabon
+- Hannah Joy Julian
+- Claude Kaiser Espanillo
