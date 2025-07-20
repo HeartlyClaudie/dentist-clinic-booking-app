@@ -1,0 +1,24 @@
+# Node modules (for all services)
+**/node_modules/
+**/npm-debug.log
+
+# Environment variables (for secrets later)
+**/.env
+
+# Docker stuff
+*.local
+.dockerignore
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VS Code settings (optional)
+.vscode/
+
+# Logs
+**/logs/
+*.log
+
+# OS temp files
+*.swp
