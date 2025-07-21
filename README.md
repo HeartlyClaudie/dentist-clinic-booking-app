@@ -1,39 +1,77 @@
-# Dental Clinic Scheduling System
+# 🦷 Dental Clinic Scheduling System
 
-This project, as of now, implements two microservices using Node.js and Docker:
-- **User Service** – Handles user registration, login, and lookup
-- **Booking Service** – Handles booking appointments and integrates with user-service
+This project now implements **four microservices** using **Node.js**, **Docker**, and **Kubernetes**:
 
----
-
-## 🛠️ Technologies Used
-- Node.js + Express.js
-- Docker + Docker Compose
-- Axios (for inter-service HTTP requests)
+- **User Service** – Handles user registration, login, and lookup  
+- **Booking Service** – Creates bookings and validates users via user-service  
+- **Product Service** – Manages clinic services/products (e.g., types of appointments)  
+- **Notification Service** – Handles notifications (email/SMS in future)
 
 ---
 
-## 📂 Project Structure
+## Technologies Used
+
+- Node.js + Express.js  
+- Docker + Docker Compose  
+- Kubernetes (local, using Docker Desktop)  
+- Prometheus + Grafana (for monitoring)  
+- Axios (for HTTP requests between services)
+
+---
+
+## Project Structure
 ```bash
 clinic_booking_app/
 ├── user-service/
 ├── booking-service/
-└── docker-compose.yml
+├── product-service/
+├── notification-service/
+├── k8s/ # Kubernetes YAML files (deployment, service, autoscaling)
+└── docker-compose.yml # For optional local Docker testing
 ```
+
 ---
 
-## 🚀 How to Run Locally
+## How to Run
 
-### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- Docker Compose (built-in if Docker Desktop is installed)
+### Kubernetes (Recommended)
 
-### Start the Services
+> Ensure Docker Desktop's Kubernetes is enabled
+
+1. Apply all manifests:
+```bash
+kubectl apply -f k8s/
+```
+2. Check pods/services
+```bash
+kubectl get pods
+kubectl get svc
+```
+3. Access via NodePort or kubectl port-forward depending on your setup.
+Optional: Docker Compose (Local Dev Only)
+```bash
 docker compose up --build
+```
+- User Service: http://localhost:3001
+- Booking Service: http://localhost:3002
+- Product Service: http://localhost:3003
+- Notification Service: http://localhost:3004
 
-User Service: http://localhost:3001
+---
 
-Booking Service: http://localhost:3002
+### Autoscaling
+
+All microservices have Horizontal Pod Autoscalers (HPA) enabled via Kubernetes.
+
+---
+
+### Monitoring
+
+- Prometheus collects metrics from all pods
+
+- Grafana displays real-time dashboards
+
+- You can view pod metrics and service performance
 
 ---
 
