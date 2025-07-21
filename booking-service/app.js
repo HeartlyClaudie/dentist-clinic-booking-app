@@ -32,7 +32,7 @@ app.post('/bookings', async (req, res) => {
   }
 });
 
-// Optional: Get all bookings
+// Get all bookings
 app.get('/bookings', (req, res) => {
   res.json(bookings);
 });
