@@ -1,6 +1,6 @@
-// app.js
 const express = require('express');
 const app = express();
+const logger = require('./logger'); // Import logger
 
 app.use(express.json());
 
@@ -17,11 +17,15 @@ app.post('/products', (req, res) => {
     price
   };
   products.push(product);
+
+  logger.info(`New product added: ${name} (ID: ${product.id})`);
+
   res.status(201).json(product);
 });
 
 // Get all products
 app.get('/products', (req, res) => {
+  logger.info("GET /products called");
   res.json(products);
 });
 

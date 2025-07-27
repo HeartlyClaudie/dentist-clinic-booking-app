@@ -8,6 +8,8 @@ services:
       - "3001:3000"
     networks:
       - clinic-network
+    volumes:
+    - ./user-service/logs:/app/logs
 
   booking-service:
     build: ./booking-service
@@ -18,6 +20,9 @@ services:
       - user-service
     networks:
       - clinic-network
+    volumes:
+    - ./booking-service/logs:/app/logs
+
 
   product-service:
     build: ./product-service
@@ -26,6 +31,9 @@ services:
       - "3003:3000"
     networks:
       - clinic-network
+    volumes:
+    - ./product-service/logs:/app/logs
+
 
   notification-service:
     build: ./notification-service
@@ -34,6 +42,9 @@ services:
       - "3004:3004"
     networks:
       - clinic-network
+    volumes:
+    - ./notification-service/logs:/app/logs
+
 
 networks:
   clinic-network:
