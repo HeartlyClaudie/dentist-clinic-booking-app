@@ -6,6 +6,8 @@ services:
     container_name: user-service
     ports:
       - "3001:3000"
+    networks:
+      - clinic-network
 
   booking-service:
     build: ./booking-service
@@ -14,15 +16,20 @@ services:
       - "3002:3000"
     depends_on:
       - user-service
+    networks:
+      - clinic-network
 
   product-service:
     build: ./product-service
     container_name: product-service
     ports:
       - "3003:3000"
+    networks:
+      - clinic-network
 
   notification-service:
     build: ./notification-service
+    container_name: notification-service
     ports:
       - "3004:3004"
     networks:

@@ -1,8 +1,7 @@
-// src/server.js
-const app = require("./app");
-
+//server.js
+const app = require('./index');
 const PORT = process.env.PORT || 3004;
 
-app.listen(PORT, () => {
-  console.log(`Notification Service running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`User service is running on port ${PORT}`);
 });
