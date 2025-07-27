@@ -1,0 +1,65 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    # Install and test each microservice
+    - name: Test User Service
+      working-directory: ./user-service
+      run: |
+        npm ci
+        npm test
+
+    - name: Test Booking Service
+      working-directory: ./booking-service
+      run: |
+        npm ci
+        npm test
+
+    - name: Test Product Service
+      working-directory: ./product-service
+      run: |
+        npm ci
+        npm test
+
+    - name: Test Notification Service
+      working-directory: ./notification-service
+      run: |
+        npm ci
+        npm test
+
+    - name: Run E2E Tests
+      working-directory: ./__tests__
+      run: |
+        npm ci
+        npm test
+
+    # OPTIONAL: Build Docker images
+    - name: Build Docker Images
+      run: |
+        docker build -t user-service ./user-service
+        docker build -t booking-service ./booking-service
+        docker build -t product-service ./product-service
+        docker build -t notification-service ./notification-service
