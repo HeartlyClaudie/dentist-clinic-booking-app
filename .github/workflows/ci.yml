@@ -25,6 +25,13 @@ jobs:
       with:
         node-version: 18
 
+    # Install Docker Compose (fixes command not found)
+    - name: Install Docker Compose
+      run: |
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose version
+
     # Unit tests for each service
     - name: Test User Service
       working-directory: ./user-service
