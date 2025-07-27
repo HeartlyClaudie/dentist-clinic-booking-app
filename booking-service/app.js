@@ -1,19 +1,17 @@
+// booking-service/app.js
 const express = require('express');
 const axios = require('axios');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
 // In-memory bookings
 const bookings = [];
 
-// Create a new booking (validates user ID with user-service)
 app.post('/bookings', async (req, res) => {
   const { userId, date, service } = req.body;
 
   try {
-    // Validate user ID via user-service (calls container or localhost)
     const response = await axios.get(`http://user-service:3000/users/${userId}`);
     const user = response.data;
 
@@ -32,11 +30,8 @@ app.post('/bookings', async (req, res) => {
   }
 });
 
-// Get all bookings
 app.get('/bookings', (req, res) => {
   res.json(bookings);
 });
 
-app.listen(PORT, () => {
-  console.log(`Booking service running on port ${PORT}`);
-});
+module.exports = app;

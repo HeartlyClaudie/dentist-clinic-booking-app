@@ -1,3 +1,4 @@
+// src/app.js
 const express = require("express");
 const bodyParser = require("body-parser");
 
@@ -23,8 +24,4 @@ app.post("/notify", (req, res) => {
   res.status(200).json({ success: true, message: `Notification sent to user ${userId}` });
 });
 
-// Start service
-const PORT = process.env.PORT || 3004;
-app.listen(PORT, () => {
-  console.log(`Notification Service running on port ${PORT}`);
-});
+module.exports = app;
