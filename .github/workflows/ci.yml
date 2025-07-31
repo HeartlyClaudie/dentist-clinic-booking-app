@@ -19,14 +19,14 @@ jobs:
       with:
         node-version: 18
 
-    # Install Docker Compose (fixes command not found)
+    # Install Docker Compose (for e2e only)
     - name: Install Docker Compose
       run: |
         sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose version
 
-    # Unit tests for each service
+    # 🔹 Run Unit Tests (no containers needed)
     - name: Test User Service
       working-directory: ./user-service
       run: |
@@ -39,7 +39,7 @@ jobs:
         npm ci
         npm test
 
-    - name: Test Product Service
+    - name: Test Product Service (using SQLite for tests)
       working-directory: ./product-service
       run: |
         npm ci
@@ -51,7 +51,7 @@ jobs:
         npm ci
         npm test
 
-    # E2E: Spin up services using Docker Compose
+    # 🔹 E2E: Start all services via Docker Compose
     - name: Start Docker Compose
       run: docker-compose up -d
 
@@ -70,9 +70,9 @@ jobs:
 
     - name: Stop Docker Compose
       if: always()
-      run: docker-compose down
+      run: docker-compose down --volumes
 
-    # OPTIONAL: Build Docker Images
+    # OPTIONAL: Build Docker Images for deployment (not used in tests)
     - name: Build Docker Images
       run: |
         docker build -t user-service ./user-service

@@ -19,10 +19,10 @@ services:
     depends_on:
       - user-service
       - mongodb-booking
-    networks:
-      - clinic-network
     environment:
       - MONGO_URI=mongodb://mongodb-booking:27017/bookingdb
+    networks:
+      - clinic-network
     volumes:
       - ./booking-service/logs:/app/logs
 
@@ -31,6 +31,14 @@ services:
     container_name: product-service
     ports:
       - "3003:3000"
+    depends_on:
+      - postgres-product
+    environment:
+      - DB_HOST=postgres-product
+      - DB_PORT=5432
+      - DB_NAME=productdb
+      - DB_USER=admin
+      - DB_PASS=password
     networks:
       - clinic-network
     volumes:
@@ -57,8 +65,24 @@ services:
     networks:
       - clinic-network
 
+  postgres-product:
+    image: postgres:15
+    container_name: postgres-product
+    restart: always
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_product_data:/var/lib/postgresql/data
+    networks:
+      - clinic-network
+
 networks:
   clinic-network:
 
 volumes:
   mongodb_booking_data:
+  postgres_product_data:
