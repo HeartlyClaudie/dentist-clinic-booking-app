@@ -24,3 +24,7 @@ logs/*
 
 # OS temp files
 *.swp
+
+#Ignore SQLite database
+*.sqlite
+*.sqlite3
