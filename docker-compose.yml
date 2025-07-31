@@ -9,7 +9,7 @@ services:
     networks:
       - clinic-network
     volumes:
-    - ./user-service/logs:/app/logs
+      - ./user-service/logs:/app/logs
 
   booking-service:
     build: ./booking-service
@@ -18,11 +18,13 @@ services:
       - "3002:3000"
     depends_on:
       - user-service
+      - mongodb-booking
     networks:
       - clinic-network
+    environment:
+      - MONGO_URI=mongodb://mongodb-booking:27017/bookingdb
     volumes:
-    - ./booking-service/logs:/app/logs
-
+      - ./booking-service/logs:/app/logs
 
   product-service:
     build: ./product-service
@@ -32,8 +34,7 @@ services:
     networks:
       - clinic-network
     volumes:
-    - ./product-service/logs:/app/logs
-
+      - ./product-service/logs:/app/logs
 
   notification-service:
     build: ./notification-service
@@ -43,8 +44,21 @@ services:
     networks:
       - clinic-network
     volumes:
-    - ./notification-service/logs:/app/logs
+      - ./notification-service/logs:/app/logs
 
+  mongodb-booking:
+    image: mongo:6.0
+    container_name: mongodb-booking
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_booking_data:/data/db
+    networks:
+      - clinic-network
 
 networks:
   clinic-network:
+
+volumes:
+  mongodb_booking_data:
