@@ -20,7 +20,7 @@ describe('End-to-End Flow Test', () => {
     // 2. Create Booking
     const bookingResponse = await axios.post(`${bookingServiceURL}/bookings`, {
       userId,
-      service: 'Tooth Cleaning',
+      service: 'Toothpaste',
       date: '2025-09-10'
     });
     expect(bookingResponse.status).toBe(201);
