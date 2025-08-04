@@ -50,7 +50,7 @@ jobs:
         npm ci
         npm test
 
-    # 🔸 Build Docker Images (before starting docker-compose)
+    # 🔸 Build Docker Images
     - name: Build Docker Images
       run: |
         docker build -t user-service ./user-service
@@ -62,13 +62,31 @@ jobs:
     - name: Start Docker Compose
       run: docker-compose up -d
 
-    # 🔹 Wait until services are ready
+    # 🔹 Wait until ALL services are ready
     - name: Wait for Services to be Ready
       run: |
-        echo "Waiting for services to be ready..."
-        sleep 10
-        curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3001/users || exit 1
-        curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3002/bookings || exit 1
+        echo "Waiting for microservices to be ready..."
+        for i in {1..20}; do
+          sleep 3
+          echo "Attempt $i..."
+
+          user=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/users)
+          booking=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/bookings)
+          product=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/products)
+          notif=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3004)
+
+          if [ "$user" = "200" ] && [ "$booking" = "200" ] && [ "$product" = "200" ] && [ "$notif" = "200" ]; then
+            echo "✅ All services are up!"
+            exit 0
+          fi
+        done
+
+        echo "❌ One or more services failed to start in time."
+        curl -i http://localhost:3001/users || true
+        curl -i http://localhost:3002/bookings || true
+        curl -i http://localhost:3003/products || true
+        curl -i http://localhost:3004 || true
+        exit 1
 
     # 🔹 Run End-to-End Tests
     - name: Install E2E Dependencies

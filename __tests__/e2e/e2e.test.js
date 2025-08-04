@@ -20,7 +20,7 @@ describe('End-to-End Flow Test', () => {
     // 2. Create Booking (ISO string includes time = unique)
     const bookingResponse = await axios.post(`${bookingServiceURL}/bookings`, {
       userId,
-      service: 'Toothpaste',
+      service: 'toothpaste',
       date: new Date().toISOString()
     });
     expect(bookingResponse.status).toBe(201);
