@@ -8,20 +8,20 @@ describe('End-to-End Flow Test', () => {
   let userId;
 
   test('Full Flow: Register → Book → Notify', async () => {
-    // 1. Register User
+    // 1. Register User (unique email to avoid conflict)
     const userResponse = await axios.post(`${userServiceURL}/users/register`, {
-      username: 'e2eUser',
-      email: 'e2e@example.com',
-      password: 'e2epass123' // ✅ required
+      username: `e2eUser_${Date.now()}`,  // unique username
+      email: `e2e_${Date.now()}@example.com`, // unique email
+      password: 'e2epass123'
     });
     expect(userResponse.status).toBe(201);
     userId = userResponse.data.id;
 
-    // 2. Create Booking
+    // 2. Create Booking (ISO string includes time = unique)
     const bookingResponse = await axios.post(`${bookingServiceURL}/bookings`, {
       userId,
       service: 'Toothpaste',
-      date: '2025-09-10'
+      date: new Date().toISOString()
     });
     expect(bookingResponse.status).toBe(201);
     expect(bookingResponse.data.userId).toBe(userId);
@@ -33,5 +33,5 @@ describe('End-to-End Flow Test', () => {
     });
     expect(notificationResponse.status).toBe(200);
     expect(notificationResponse.data.success).toBe(true);
-  }, 10000); // timeout for async flow
+  }, 10000);
 });
