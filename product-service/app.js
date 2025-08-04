@@ -6,10 +6,26 @@ const Product = require('./models/product');
 
 app.use(express.json());
 
+// Function to seed initial product
+const seedInitialProduct = async () => {
+  const existing = await Product.findOne({ where: { name: 'toothpaste' } });
+  if (!existing) {
+    await Product.create({
+      name: 'toothpaste',
+      price: 25,
+      stock: 10
+    });
+    logger.info('✅ Seeded initial product: Toothpaste');
+  } else {
+    logger.info('ℹ️ Product "toothpaste" already exists, skipping seeding.');
+  }
+};
+
 // Sync the model with the database
 sequelize.sync({ force: false })
-  .then(() => {
+  .then(async () => {
     logger.info('PostgreSQL connected and Product model synced');
+    await seedInitialProduct(); // 🌱 call seeder here
   })
   .catch(err => {
     logger.error('Sequelize sync error: ' + err.message);
@@ -25,7 +41,6 @@ app.post('/products', async (req, res) => {
   }
 
   try {
-    // Prevent duplicates
     const existing = await Product.findOne({ where: { name: name.trim().toLowerCase() } });
     if (existing) {
       logger.warn(`Duplicate product: ${name}`);
