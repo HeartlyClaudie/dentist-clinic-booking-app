@@ -25,7 +25,7 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose version
 
-    # 🔹 Run Unit Tests
+    # 🔹 Unit Tests for Each Microservice
     - name: Test User Service
       working-directory: ./user-service
       run: |
@@ -50,10 +50,19 @@ jobs:
         npm ci
         npm test
 
-    # 🔹 Run E2E Tests
+    # 🔸 Build Docker Images (before starting docker-compose)
+    - name: Build Docker Images
+      run: |
+        docker build -t user-service ./user-service
+        docker build -t booking-service ./booking-service
+        docker build -t product-service ./product-service
+        docker build -t notification-service ./notification-service
+
+    # 🔹 Start Docker Compose using built images
     - name: Start Docker Compose
       run: docker-compose up -d
 
+    # 🔹 Wait until services are ready
     - name: Wait for Services to be Ready
       run: |
         echo "Waiting for services to be ready..."
@@ -61,24 +70,21 @@ jobs:
         curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3001/users || exit 1
         curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3002/bookings || exit 1
 
+    # 🔹 Run End-to-End Tests
     - name: Install E2E Dependencies
       working-directory: ./__tests__
-      run: |
-        npm ci
+      run: npm ci
 
     - name: Run E2E Tests
       working-directory: ./__tests__
-      run: |
-        npm test
+      run: npm test
 
+    # 🔹 Stop all containers after test
     - name: Stop Docker Compose
       if: always()
       run: docker-compose down --volumes
 
-    # 🔸 Build Docker Images
-    - name: Build Docker Images
-      run: |
-        docker build -t user-service ./user-service
-        docker build -t booking-service ./booking-service
-        docker build -t product-service ./product-service
-        docker build -t notification-service ./notification-service
+    # 🔸 Show logs on failure for easier debugging
+    - name: Show Docker Logs on Failure
+      if: failure()
+      run: docker-compose logs
