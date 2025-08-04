@@ -1,77 +1,124 @@
-# 🦷 Dental Clinic Scheduling System
 
-This project now implements **four microservices** using **Node.js**, **Docker**, and **Kubernetes**:
+# Dental Clinic Scheduling System
 
-- **User Service** – Handles user registration, login, and lookup  
-- **Booking Service** – Creates bookings and validates users via user-service  
-- **Product Service** – Manages clinic services/products (e.g., types of appointments)  
-- **Notification Service** – Handles notifications (email/SMS in future)
+This project implements a **microservices-based architecture** for a dental clinic using **Node.js**, **Docker**, and **Kubernetes**. It includes:
+
+- **User Service** – Manages user registration, login, and retrieval  
+- **Booking Service** – Handles booking creation and validation via User Service  
+- **Product Service** – Manages clinic services/products (e.g., dental services offered)  
+- **Notification Service** – Sends internal notifications (future support for email/SMS)
 
 ---
 
 ## Technologies Used
 
-- Node.js + Express.js  
-- Docker + Docker Compose  
-- Kubernetes (local, using Docker Desktop)  
-- Prometheus + Grafana (for monitoring)  
-- Axios (for HTTP requests between services)
+This project leverages a wide range of technologies to implement a complete, scalable, and observable microservices architecture:
 
----
+- **Node.js & Express.js** – for creating RESTful microservices.
+- **Docker** – for containerization of each service.
+- **Kubernetes** – for orchestrating containers (including Pods, Deployments, Services, Ingress, and HPA).
+- **Ingress Controller** – for external access and routing.
+- **Horizontal Pod Autoscaler (HPA)** – for scaling microservices based on CPU utilization.
+- **Prometheus** – for collecting metrics.
+- **Grafana** – for monitoring and visualizing metrics.
+- **ConfigMap & Secrets** – for configuration management and secure credentials.
+- **RBAC (Role-Based Access Control)** – for fine-grained Kubernetes access control.
+- **Network Policies** – to restrict traffic between pods.
+- **PostgreSQL, MongoDB, SQLite** – demonstrating polyglot persistence.
+- **GitHub Actions** – for CI/CD pipelines.
+- **Jest** – for automated testing.
 
 ## Project Structure
-```bash
-clinic_booking_app/
-├── user-service/
-├── booking-service/
-├── product-service/
-├── notification-service/
-├── k8s/ # Kubernetes YAML files (deployment, service, autoscaling)
-└── docker-compose.yml # For optional local Docker testing
-```
 
----
+```
+CLINIC_BOOKING_APP/
+├── __tests__/
+├── .github/
+├── booking-service/
+├── k8s/
+│   ├── booking-service/
+│   │   ├── configmap.yaml
+│   │   ├── deployment.yaml
+│   │   ├── network-policy.yaml
+│   │   ├── secret.yaml
+│   │   ├── service.yaml
+│   ├── notification-service/
+│   ├── product-service/
+│   ├── user-service/
+│   ├── rbac/
+│   │   ├── pod-viewer-rolebinding.yaml
+│   │   ├── pod-viewer-serviceaccount.yaml
+│   │   ├── viewer-role.yaml
+├── notification-service/
+├── product-service/
+├── user-service/
+├── .gitignore
+├── docker-compose.yml
+└── README.md
+```
 
 ## How to Run
 
 ### Kubernetes (Recommended)
 
-> Ensure Docker Desktop's Kubernetes is enabled
+> Prerequisite: Kubernetes must be enabled in Docker Desktop
 
-1. Apply all manifests:
+1. Deploy all components:
+
 ```bash
 kubectl apply -f k8s/
 ```
-2. Check pods/services
+
+2. Verify deployments:
+
 ```bash
 kubectl get pods
 kubectl get svc
 ```
-3. Access via NodePort or kubectl port-forward depending on your setup.
-Optional: Docker Compose (Local Dev Only)
+
+3. Optionally access services:
+
+```bash
+kubectl port-forward service/user-service 3001:3000
+kubectl port-forward service/booking-service 3002:3000
+kubectl port-forward service/product-service 3003:3000
+kubectl port-forward service/notification-service 3004:3000
+```
+
+4. Access Prometheus and Grafana:
+
+```bash
+kubectl port-forward -n monitoring service/prometheus-server 9090:9090
+kubectl port-forward -n monitoring service/grafana 3000:3000
+```
+
+---
+
+### Docker Compose (For Local Development)
+
 ```bash
 docker compose up --build
 ```
-- User Service: http://localhost:3001
-- Booking Service: http://localhost:3002
-- Product Service: http://localhost:3003
-- Notification Service: http://localhost:3004
+
+Access endpoints:
+
+- User Service: `http://localhost:3001`
+- Booking Service: `http://localhost:3002`
+- Product Service: `http://localhost:3003`
+- Notification Service: `http://localhost:3004`
 
 ---
 
-### Autoscaling
+## Kubernetes Features
 
-All microservices have Horizontal Pod Autoscalers (HPA) enabled via Kubernetes.
+The project includes full Kubernetes deployment features:
 
----
-
-### Monitoring
-
-- Prometheus collects metrics from all pods
-
-- Grafana displays real-time dashboards
-
-- You can view pod metrics and service performance
+- **Horizontal Pod Autoscaling (HPA)** per service  
+- **ConfigMaps and Secrets** for environment configs and credentials  
+- **RBAC (Role-Based Access Control)** to restrict cluster actions  
+- **Network Policies** to isolate microservices  
+- **Rolling Updates** for zero-downtime deployments  
+- **Prometheus + Grafana** integration for monitoring and visualization  
 
 ---
 
@@ -80,29 +127,52 @@ All microservices have Horizontal Pod Autoscalers (HPA) enabled via Kubernetes.
 ### User Service
 
 | Method | Endpoint        | Description         |
-| ------ | --------------- | ------------------- |
+|--------|-----------------|---------------------|
 | POST   | /users/register | Register a new user |
 | POST   | /users/login    | Log in a user       |
-| GET    | /users/\:id     | Get user by ID      |
+| GET    | /users/:id      | Get user by ID      |
 
 ### Booking Service
+
 | Method | Endpoint  | Description                               |
-| ------ | --------- | ----------------------------------------- |
-| POST   | /bookings | Create a booking (validates user-service) |
-| GET    | /bookings | Retrieve all bookings (in-memory)         |
+|--------|-----------|-------------------------------------------|
+| POST   | /bookings | Create booking (verifies user-service)    |
+| GET    | /bookings | Retrieve all bookings                     |
+
+### Product Service
+
+| Method | Endpoint       | Description                  |
+|--------|----------------|------------------------------|
+| GET    | /products      | List all clinic services     |
+| POST   | /products      | Add a new clinic service     |
+
+### Notification Service
+
+| Method | Endpoint        | Description                      |
+|--------|------------------|----------------------------------|
+| POST   | /notifications   | Send internal notifications      |
 
 ---
 
 ## Example Workflow
-1. Register a user at http://localhost:3001/users/register
 
-2. Create a booking at http://localhost:3002/bookings using the user ID
+1. Register a user at `http://localhost:3001/users/register`  
+2. Use the user ID to create a booking at `http://localhost:3002/bookings`  
+3. Optionally trigger a notification (simulated)  
+4. View all bookings at `http://localhost:3002/bookings`  
 
-3. View bookings at http://localhost:3002/bookings
+---
+
+## Monitoring Workflow
+
+1. Prometheus scrapes metrics from all services.  
+2. Grafana displays CPU, memory, and HPA metrics visually.  
+3. You can view dashboards at `http://localhost:3000` after port-forwarding.
 
 ---
 
 ## Team Members
-- Alexa Agabon
-- Hannah Joy Julian
+
+- Alexa Agabon  
+- Hannah Joy Julian  
 - Claude Kaiser Espanillo
