@@ -2,10 +2,21 @@ const { createLogger, transports, format } = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure the logs directory exists inside the container
-const logDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+const isTest = process.env.NODE_ENV === 'test';
+
+const loggerTransports = [
+  new transports.Console()
+];
+
+if (!isTest) {
+  const logDir = path.join(__dirname, '..', 'logs');
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
+  loggerTransports.push(
+    new transports.File({ filename: path.join(logDir, 'notification-service.log') })
+  );
 }
 
 const logger = createLogger({
@@ -16,10 +27,7 @@ const logger = createLogger({
       return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
     })
   ),
-  transports: [
-    new transports.Console(),
-    new transports.File({ filename: path.join(logDir, 'notification-service.log') })
-  ]
+  transports: loggerTransports
 });
 
 module.exports = logger;

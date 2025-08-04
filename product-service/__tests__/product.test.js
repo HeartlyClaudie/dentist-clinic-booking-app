@@ -6,73 +6,115 @@ const { Sequelize, DataTypes } = require('sequelize');
 // In-memory SQLite DB for isolated test environment
 const sequelize = new Sequelize('sqlite::memory:', { logging: false });
 
-// Define Product model locally for testing
+// Define Product model (updated)
 const Product = sequelize.define('Product', {
-  name: DataTypes.STRING,
-  description: DataTypes.STRING,
-  price: DataTypes.FLOAT,
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
 }, {
   timestamps: false
 });
 
-// Create a test version of the app
+// Test app setup
 const app = express();
 app.use(express.json());
 
-// Add product route
+// POST /products
 app.post('/products', async (req, res) => {
+  const { name, price, stock } = req.body;
+
+  if (!name || !price || stock === undefined) {
+    return res.status(400).json({ message: 'name, price, and stock are required' });
+  }
+
   try {
-    const product = await Product.create(req.body);
+    const existing = await Product.findOne({ where: { name: name.trim().toLowerCase() } });
+    if (existing) {
+      return res.status(409).json({ message: 'Service already exists' });
+    }
+
+    const product = await Product.create({
+      name: name.trim().toLowerCase(),
+      price,
+      stock
+    });
+
     logger.info(`Added: ${product.name}`);
     res.status(201).json(product);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// Get products route
+// GET /products
 app.get('/products', async (_req, res) => {
-  const products = await Product.findAll();
+  const products = await Product.findAll({
+    attributes: ['id', 'name', 'price', 'stock']
+  });
   res.json(products);
 });
 
-// Sync DB before all tests
+// Lifecycle hooks
 beforeAll(async () => {
   await sequelize.sync();
 });
 
-// Clean DB after each test
 afterEach(async () => {
   await Product.destroy({ where: {} });
 });
 
-// Close DB after all tests
 afterAll(async () => {
   await sequelize.close();
 });
 
 // Tests
 describe('Product Service', () => {
+
   test('should add a new product', async () => {
     const res = await request(app)
       .post('/products')
       .send({
-        name: 'Toothbrush',
-        description: 'Electric toothbrush with soft bristles',
-        price: 29.99
+        name: 'Cleaning',
+        price: 80,
+        stock: 10
       });
 
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('name', 'Toothbrush');
-    expect(res.body).toHaveProperty('description');
-    expect(res.body).toHaveProperty('price', 29.99);
+    expect(res.body).toHaveProperty('name', 'cleaning'); // normalized
+    expect(res.body).toHaveProperty('price', 80);
+    expect(res.body).toHaveProperty('stock', 10);
+  });
+
+  test('should reject duplicate product names', async () => {
+    await Product.create({ name: 'cleaning', price: 80, stock: 10 });
+
+    const res = await request(app)
+      .post('/products')
+      .send({
+        name: 'Cleaning',
+        price: 100,
+        stock: 5
+      });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toHaveProperty('message', 'Service already exists');
   });
 
   test('should return all products', async () => {
     await Product.create({
-      name: 'Toothpaste',
-      description: 'Mint flavored',
-      price: 3.49
+      name: 'filling',
+      price: 150,
+      stock: 5
     });
 
     const res = await request(app).get('/products');
@@ -80,6 +122,15 @@ describe('Product Service', () => {
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(1);
-    expect(res.body[0]).toHaveProperty('name', 'Toothpaste');
+    expect(res.body[0]).toHaveProperty('name', 'filling');
+  });
+
+  test('should reject if required fields are missing', async () => {
+    const res = await request(app)
+      .post('/products')
+      .send({ name: 'Checkup' }); // missing price & stock
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toMatch(/required/i);
   });
 });

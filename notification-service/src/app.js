@@ -1,17 +1,17 @@
+// src/app.js
 const express = require("express");
 const bodyParser = require("body-parser");
-const logger = require("./logger"); // Import logger
+const logger = require("./logger");
 
 const app = express();
 app.use(bodyParser.json());
 
-// Health check
+// Routes
 app.get("/", (req, res) => {
   logger.info("Health check - Notification Service is up");
   res.send("Notification Service is up");
 });
 
-// POST /notify endpoint
 app.post("/notify", (req, res) => {
   const { userId, message } = req.body;
 
@@ -20,10 +20,12 @@ app.post("/notify", (req, res) => {
     return res.status(400).json({ error: "Missing userId or message" });
   }
 
-  // Simulate sending a notification (email/SMS)
   logger.info(`📨 Notification sent to User ${userId}: ${message}`);
-
-  res.status(200).json({ success: true, message: `Notification sent to user ${userId}` });
+  res.status(200).json({
+    success: true,
+    message: `Notification sent to user ${userId}`,
+    delivered: true
+  });
 });
 
 module.exports = app;

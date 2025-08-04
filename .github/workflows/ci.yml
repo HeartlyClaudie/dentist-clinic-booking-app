@@ -19,14 +19,13 @@ jobs:
       with:
         node-version: 18
 
-    # Install Docker Compose (for e2e only)
     - name: Install Docker Compose
       run: |
         sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose version
 
-    # 🔹 Run Unit Tests (no containers needed)
+    # 🔹 Run Unit Tests
     - name: Test User Service
       working-directory: ./user-service
       run: |
@@ -39,7 +38,7 @@ jobs:
         npm ci
         npm test
 
-    - name: Test Product Service (using SQLite for tests)
+    - name: Test Product Service
       working-directory: ./product-service
       run: |
         npm ci
@@ -51,28 +50,32 @@ jobs:
         npm ci
         npm test
 
-    # 🔹 E2E: Start all services via Docker Compose
+    # 🔹 Run E2E Tests
     - name: Start Docker Compose
       run: docker-compose up -d
 
-    - name: Wait for services to be ready
+    - name: Wait for Services to be Ready
       run: |
-        echo "Waiting for services..."
+        echo "Waiting for services to be ready..."
         sleep 10
         curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3001/users || exit 1
         curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:3002/bookings || exit 1
 
-    - name: Install and Run E2E Tests
+    - name: Install E2E Dependencies
       working-directory: ./__tests__
       run: |
         npm ci
+
+    - name: Run E2E Tests
+      working-directory: ./__tests__
+      run: |
         npm test
 
     - name: Stop Docker Compose
       if: always()
       run: docker-compose down --volumes
 
-    # OPTIONAL: Build Docker Images for deployment (not used in tests)
+    # 🔸 Build Docker Images
     - name: Build Docker Images
       run: |
         docker build -t user-service ./user-service

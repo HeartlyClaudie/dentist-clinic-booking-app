@@ -11,7 +11,8 @@ describe('End-to-End Flow Test', () => {
     // 1. Register User
     const userResponse = await axios.post(`${userServiceURL}/users/register`, {
       username: 'e2eUser',
-      email: 'e2e@example.com'
+      email: 'e2e@example.com',
+      password: 'e2epass123' // ✅ required
     });
     expect(userResponse.status).toBe(201);
     userId = userResponse.data.id;
@@ -32,5 +33,5 @@ describe('End-to-End Flow Test', () => {
     });
     expect(notificationResponse.status).toBe(200);
     expect(notificationResponse.data.success).toBe(true);
-  }, 10000); // extend timeout for async calls
+  }, 10000); // timeout for async flow
 });

@@ -1,9 +1,8 @@
-// __tests__/notification.test.js
+// __tests__/notif.test.js
 const request = require("supertest");
-const app = require("../src/index");
+const app = require("../src/app"); // ✅ FIXED import
 
 describe("Notification Service", () => {
-
   test("should respond to health check", async () => {
     const res = await request(app).get("/");
     expect(res.statusCode).toBe(200);
@@ -17,13 +16,15 @@ describe("Notification Service", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("success", true);
-    expect(res.body).toHaveProperty("message", expect.stringContaining("Notification sent"));
+    expect(res.body.message).toMatch(/notification sent to user 123/i);
   });
 
   test("should return 400 if userId or message is missing", async () => {
-    const res = await request(app).post("/notify").send({ userId: 123 });
+    const res = await request(app)
+      .post("/notify")
+      .send({ userId: 123 }); // missing message
+
     expect(res.statusCode).toBe(400);
     expect(res.body).toHaveProperty("error", "Missing userId or message");
   });
-
 });

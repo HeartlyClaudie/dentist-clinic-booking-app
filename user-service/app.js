@@ -1,9 +1,10 @@
 const express = require('express');
-const app = express();
-const logger = require('./logger'); // Logger
-const sequelize = require('./sequelize'); // Sequelize connection
-const User = require('./models/user'); // User model
+const bcrypt = require('bcrypt');
+const logger = require('./logger');
+const sequelize = require('./sequelize');
+const User = require('./models/user');
 
+const app = express();
 app.use(express.json());
 
 // Sync database
@@ -17,17 +18,24 @@ sequelize.sync()
 
 // Register user
 app.post('/users/register', async (req, res) => {
-  const { username, email } = req.body;
+  const { username, email, password } = req.body;
 
-  if (!username || !email) {
-    logger.warn("Registration failed: Missing username or email.");
-    return res.status(400).json({ message: 'Username and email are required' });
+  if (!username || !email || !password) {
+    logger.warn("Registration failed: Missing fields.");
+    return res.status(400).json({ message: 'Username, email, and password are required' });
   }
 
   try {
-    const newUser = await User.create({ username, email });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      username,
+      email,
+      password: hashedPassword
+    });
+
     logger.info(`New user registered: ${username} (ID: ${newUser.id})`);
-    res.status(201).json(newUser);
+    res.status(201).json({ id: newUser.id, username: newUser.username, email: newUser.email });
   } catch (err) {
     logger.error(`Registration error: ${err.message}`);
     res.status(500).json({ message: 'Registration failed' });
@@ -36,23 +44,30 @@ app.post('/users/register', async (req, res) => {
 
 // Login user
 app.post('/users/login', async (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
 
-  if (!email) {
-    logger.warn("Login failed: Missing email.");
-    return res.status(400).json({ message: 'Email is required' });
+  if (!email || !password) {
+    logger.warn("Login failed: Missing email or password.");
+    return res.status(400).json({ message: 'Email and password are required' });
   }
 
   try {
     const user = await User.findOne({ where: { email } });
 
-    if (user) {
-      logger.info(`Login success for user ID: ${user.id}`);
-      res.json({ message: 'Login success', user });
-    } else {
-      logger.warn(`Login failed for email: ${email}`);
-      res.status(401).json({ message: 'Login failed' });
+    if (!user) {
+      logger.warn(`Login failed: Email not found - ${email}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      logger.warn(`Login failed: Invalid password for user ID ${user.id}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    logger.info(`Login success for user ID: ${user.id}`);
+    res.json({ message: 'Login success', user: { id: user.id, username: user.username, email: user.email } });
   } catch (err) {
     logger.error(`Login error: ${err.message}`);
     res.status(500).json({ message: 'Login failed' });
@@ -64,7 +79,9 @@ app.get('/users/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const user = await User.findByPk(id);
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'username', 'email'] // Hide password
+    });
 
     if (user) {
       logger.info(`Fetched user ID: ${user.id}`);
