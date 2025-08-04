@@ -25,6 +25,9 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose version
 
+    - name: Install jq (for JSON parsing)
+      run: sudo apt-get install -y jq
+
     # 🔹 Unit Tests for Each Microservice
     - name: Test User Service
       working-directory: ./user-service
@@ -62,7 +65,7 @@ jobs:
     - name: Start Docker Compose
       run: docker-compose up -d
 
-    # 🔹 Wait until ALL services are ready
+    # 🔹 Wait until ALL services are ready (includes toothpaste check)
     - name: Wait for Services to be Ready
       run: |
         echo "Waiting for microservices to be ready..."
@@ -70,26 +73,22 @@ jobs:
           sleep 3
           echo "Attempt $i..."
 
-          # 🔹 POST for /users/register with dummy payload
           user=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3001/users/register -H "Content-Type: application/json" -d '{"username":"dummy","email":"dummy@example.com","password":"dummy123"}')
-
-          # 🔹 Booking health - simple GET request
           booking=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/bookings)
 
-          # 🔹 Product: allow 500 here but detect as UP
-          product=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/products)
-          if [ "$product" = "500" ]; then product="200"; fi  # Allow error as long as container is responding
+          # Check if 'toothpaste' exists in product-service
+          productJson=$(curl -s http://localhost:3003/products)
+          productCode=$([ "$(echo "$productJson" | jq -e '.[] | select(.name=="toothpaste")')" ] && echo 200 || echo 404)
 
-          # 🔹 Notification
           notif=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3004)
 
-          if [ "$user" = "201" ] && [ "$booking" = "200" ] && [ "$product" = "200" ] && [ "$notif" = "200" ]; then
-            echo "✅ All services are up!"
+          if [ "$user" = "201" ] && [ "$booking" = "200" ] && [ "$productCode" = "200" ] && [ "$notif" = "200" ]; then
+            echo "All services are up and seeded with 'toothpaste'"
             exit 0
           fi
         done
 
-        echo "❌ One or more services failed to start in time."
+        echo "One or more services failed to start or seed in time."
         curl -i http://localhost:3001 || true
         curl -i http://localhost:3002 || true
         curl -i http://localhost:3003 || true
